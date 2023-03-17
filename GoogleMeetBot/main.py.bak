@@ -1,0 +1,66 @@
+import pyautogui as pg
+from datetime import datetime as dt
+import webbrowser
+import time
+import pywhatkit as pw
+import cv2
+def delay(sec):
+    print('waiting for '+str(sec)+' seconds')
+    for i in range(sec, 0, -1):
+        print(i)
+        time.sleep(1)
+def wait(h,m):
+    now=dt.now()
+    ch= now.hour
+    cm= now.minute
+    if h<=ch and m<=cm:
+        return
+    print('waiting for '+str((h-ch)*3600+(m-cm)*60)+' seconds from '+str(ch)+":"+str(cm))
+    delay((h-ch)*3600+(m-cm)*60)
+def find_phNo(name):
+    with open(r"C:\Users\sindu\Desktop\python\contacts.csv", 'r') as file:
+            csvfile=csv.DictReader(file)
+            for r in csvfile:
+                    if name==dict(r)['Names']:
+                            return dict(r)['Phone_numbers']
+    return None
+def joinMeet(link, leave=False,duration=1,h=dt.now().hour, m=dt.now().minute):
+    # waiting until join time
+    wait(h, m)
+    
+    #open link in new tab
+    webbrowser.open_new_tab(link)
+    delay(10)
+    
+    # turn off camera
+    print("turning off camera")
+    with pg.hold('ctrl'):
+        pg.press('e')
+    delay(3)
+    # turn off audio
+    print("turning off audio")
+    with pg.hold('ctrl'):
+        pg.press('d')
+    delay(4)
+    
+    # join btn
+    print("clicking join button")
+    try:
+        jBtnImg = cv2.imread(r"C:\Users\sindu\Desktop\GoogleMeetBot\joinnowbtn.png")
+        joinBtn = pg.locateCenterOnScreen(jBtnImg)
+    except pg.ImageNotFoundException:
+        print("join button not found. clicking ask to join button")
+        joinBtn = pg.locateCenterOnScreen(r"C:\Users\sindu\Desktop\GoogleMeetBot\asktojoinbtn.png")
+    except pg.ImageNotFoundException:
+        print("ask to join button not found")
+    pg.click(joinBtn[0], joinBtn[1])
+    print('meet joined at ',dt.now().strftime('%I:%M %p'))
+    pw.sendwhatmsg_instantly('mom', 'meet joined at'+dt.now().strftime('%I:%M %p'), True, 5)
+    # leave meet
+    if leave:
+        delay(duration*60) # duration is in mins
+        with pg.hold('ctrl'):
+            pg.press('w')
+        print('meet left at ',dt.now().strftime('%I:%M %p'))
+        pw.sendwhatmsg_instantly('mom', 'meet left at'+dt.now().strftime('%I:%M %p'), True, 5)
+joinMeet('https://meet.google.com/uqc-wuiu-dir')
